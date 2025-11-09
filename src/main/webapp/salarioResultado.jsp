@@ -23,16 +23,16 @@
                 box-shadow: 0 0 10px #00000055;">
             <c:choose>
                 <c:when test="${not empty error}">
-                    <div class="error">${error}</div>
+                    <div class="error"><c:out value="${error}"/></div>
                 </c:when>
                 <c:otherwise>
-                    <h2>Empleado: ${empleado.nombre}</h2>
-                    <p><strong>DNI:</strong> ${empleado.dni}</p>
-                    <p><strong>Categoría:</strong> ${empleado.categoria}</p>
-                    <p><strong>Años trabajados:</strong> ${empleado.anyos}</p>
+                    <h2>Empleado: <c:out value="${empleado.nombre}"/></h2>
+                    <p><strong>DNI:</strong> <c:out value="${empleado.dni}"/></p>
+                    <p><strong>Categoría:</strong> <c:out value="${empleado.categoria}"/></p>
+                    <p><strong>Años trabajados:</strong> <c:out value="${empleado.anyos}"/></p>
                     <p><strong>Salario calculado:</strong> 
                         <span style="color:#5cff8a; font-size:1.3em;">
-                            ${salario} €
+                            <c:out value="${salario}"/> €
                         </span>
                     </p>
                 </c:otherwise>

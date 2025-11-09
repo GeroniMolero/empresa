@@ -34,10 +34,10 @@
                         <tbody>
                             <c:forEach var="n" items="${listaNominas}">
                                 <tr>
-                                    <td>${n.empleado.nombre}</td>
-                                    <td>${n.empleado.dni}</td>
-                                    <td>${n.empleado.categoria}</td>
-                                    <td>${n.empleado.anyos}</td>
+                                    <td><c:out value="${n.empleado.nombre}"/></td>
+                                    <td><c:out value="${n.empleado.dni}"/></td>
+                                    <td><c:out value="${n.empleado.categoria}"/></td>
+                                    <td><c:out value="${n.empleado.anyos}"/></td>
                                     <td>
                                         <fmt:formatNumber value="${n.salario}" type="currency" currencySymbol="€" />
                                     </td>

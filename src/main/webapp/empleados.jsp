@@ -34,20 +34,20 @@
                         <tbody>
                             <c:forEach var="empleado" items="${listaEmpleados}">
                                 <tr>
-                                <td>${empleado.nombre}</td>
-                                <td>${empleado.dni}</td>
-                                <td>${empleado.sexo}</td>
-                                <td>${empleado.categoria}</td>
-                                <td>${empleado.anyos}</td>
+                                <td><c:out value="${empleado.nombre}"/></td>
+                                <td><c:out value="${empleado.dni}"/></td>
+                                <td><c:out value="${empleado.sexo}"/></td>
+                                <td><c:out value="${empleado.categoria}"/></td>
+                                <td><c:out value="${empleado.anyos}"/></td>
                                 <td>
                                     <form action="<c:url value='/app/empleados'/>" method="post" style="display:inline;">
                                         <input type="hidden" name="action" value="editar">
-                                        <input type="hidden" name="dni" value="${empleado.dni}">
+                                        <input type="hidden" name="dni" value="<c:out value='${empleado.dni}'/>">
                                         <button type="submit" class="btn-small">Editar</button>
                                     </form>
                                     <form action="<c:url value='/app/nominas'/>" method="post" style="display:inline;">
                                         <input type="hidden" name="action" value="consultarSalario">
-                                        <input type="hidden" name="dni" value="${empleado.dni}">
+                                        <input type="hidden" name="dni" value="<c:out value='${empleado.dni}'/>">
                                         <button type="submit" class="btn-small">Ver salario</button>
                                     </form>
                                 </td>

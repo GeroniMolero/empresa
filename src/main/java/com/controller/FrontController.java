@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.util.ErrorHandler;
+
 /**
  * Patrón Front Controller - Punto único de entrada para todas las peticiones.
  * Centraliza el enrutamiento hacia los controladores específicos (EmpleadosController o NominasController).
@@ -73,7 +75,7 @@ public class FrontController extends HttpServlet {
             
         } catch (Exception e) {
             log("Error en FrontController: " + e.getMessage(), e);
-            manejarError(e, request, response);
+            ErrorHandler.handleError(e, request, response, getServletContext());
         }
     }
     
@@ -83,31 +85,6 @@ public class FrontController extends HttpServlet {
     private void redirigirAHome(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.getRequestDispatcher("/index.jsp").forward(request, response);
-    }
-    
-    /**
-     * Manejo centralizado de errores
-     */
-    private void manejarError(Exception e, HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        request.setAttribute("error", e.getMessage());
-        request.setAttribute("errorType", e.getClass().getSimpleName());
-        request.setAttribute("errorStackTrace", getStackTraceAsString(e));
-        
-        request.getRequestDispatcher("/WEB-INF/error.jsp").forward(request, response);
-    }
-    
-    /**
-     * Convierte el stack trace en String para mostrar en la página de error
-     */
-    private String getStackTraceAsString(Exception e) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(e.toString()).append("\n");
-        for (StackTraceElement element : e.getStackTrace()) {
-            sb.append("\tat ").append(element.toString()).append("\n");
-        }
-        return sb.toString();
     }
     
     @Override

@@ -73,11 +73,11 @@
 
                 <!-- DNI -->
                 <label for="dni">DNI:</label>
-                <input type="text" id="dni" name="dni" value="${empleado.dni}" readonly>
+                <input type="text" id="dni" name="dni" value="<c:out value='${empleado.dni}'/>" readonly>
 
                 <!-- Nombre -->
                 <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" value="${empleado.nombre}" required>
+                <input type="text" id="nombre" name="nombre" value="<c:out value='${empleado.nombre}'/>" required>
 
                 <!-- Sexo -->
                 <label for="sexo">Sexo:</label>

@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.service.INominaService;
 import com.service.NominaService;
+import com.util.ErrorHandler;
 
 /**
  * Controlador para la gestión de nóminas.
@@ -50,9 +51,7 @@ public class NominasController extends HttpServlet {
                     break;
             }
         } catch (Exception e) {
-            // Log sencillo. En producción usar un logger.
-            request.setAttribute("error", e.getMessage());
-            request.getRequestDispatcher("/WEB-INF/error.jsp").forward(request, response);
+            manejarError(e, request, response);
         }
     }
 
@@ -92,8 +91,12 @@ public class NominasController extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Acción POST no reconocida: " + action);
             }
         } catch (Exception e) {
-            request.setAttribute("error", e.getMessage());
-            request.getRequestDispatcher("/WEB-INF/error.jsp").forward(request, response);
+            manejarError(e, request, response);
         }
+    }
+
+    private void manejarError(Exception e, HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        ErrorHandler.handleErrorSimple(e, request, response);
     }
 }

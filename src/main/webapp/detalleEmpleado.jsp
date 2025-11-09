@@ -16,16 +16,16 @@
         <section class="detalle-container">
             <c:choose>
                 <c:when test="${not empty error}">
-                    <div class="error">${error}</div>
+                    <div class="error"><c:out value="${error}"/></div>
                 </c:when>
 
                 <c:when test="${not empty empleado}">
                     <div class="detalle">
-                        <h2>${empleado.nombre}</h2>
-                        <p><strong>DNI:</strong> ${empleado.dni}</p>
-                        <p><strong>Sexo:</strong> ${empleado.sexo}</p>
-                        <p><strong>Categoría:</strong> ${empleado.categoria}</p>
-                        <p><strong>Años trabajados:</strong> ${empleado.anyos}</p>
+                        <h2><c:out value="${empleado.nombre}"/></h2>
+                        <p><strong>DNI:</strong> <c:out value="${empleado.dni}"/></p>
+                        <p><strong>Sexo:</strong> <c:out value="${empleado.sexo}"/></p>
+                        <p><strong>Categoría:</strong> <c:out value="${empleado.categoria}"/></p>
+                        <p><strong>Años trabajados:</strong> <c:out value="${empleado.anyos}"/></p>
                     </div>
 
                     <div class="acciones">

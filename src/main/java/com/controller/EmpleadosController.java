@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.model.Empleado;
 import com.service.EmpleadoService;
 import com.service.IEmpleadoService;
+import com.util.ErrorHandler;
 
 /**
  * Controlador para gestión de empleados.
@@ -103,8 +104,6 @@ public class EmpleadosController extends HttpServlet {
 
     private void manejarError(Exception e, HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        // Log sencillo. En producción utilizar un logger (SLF4J/Log4j/Jul).
-        req.setAttribute("error", e.getMessage());
-        req.getRequestDispatcher("/WEB-INF/error.jsp").forward(req, res);
+        ErrorHandler.handleErrorSimple(e, req, res);
     }
 }

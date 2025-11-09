@@ -456,6 +456,167 @@ Implicaciones prácticas:
 
 ---
 
+## Seguridad y Protección de Datos
+
+### Medidas de seguridad implementadas
+
+#### 1. Sanitización de errores según entorno
+
+**Problema resuelto**: Evitar que mensajes de error técnicos (SQL, stack traces, rutas internas) se expongan al usuario final.
+
+**Implementación**:
+- Parámetro `app.environment` en `web.xml` (valores: `development` o `production`)
+- Método `sanitizeErrorMessage()` en todos los controladores
+- **Lista blanca**: Permite mensajes de negocio (DNI, empleado, nómina)
+- **Lista negra**: Oculta mensajes técnicos (SQL, connection, table, exception)
+
+**Ejemplo**:
+```java
+// Modo production
+SQLException: "Table 'nominas' doesn't exist at line 45"
+    ↓
+Usuario ve: "Error al procesar la solicitud. Contacte al administrador."
+
+// Modo development  
+Usuario ve: mensaje completo + stack trace en desplegable
+```
+
+**Configuración**:
+```xml
+<!-- web.xml -->
+<context-param>
+    <param-name>app.environment</param-name>
+    <param-value>development</param-value> <!-- Cambiar a 'production' en producción -->
+</context-param>
+```
+
+**Beneficios**:
+- No expone estructura de base de datos
+- No revela rutas de archivos del servidor
+- No muestra nombres de clases internas
+- Logs del servidor siempre conservan error completo para administradores
+- En desarrollo: debugging fácil con stack traces visibles
+
+#### 2. Sesiones seguras (solo cookies)
+
+**Problema resuelto**: Prevenir session hijacking por URLs compartidas con `jsessionid` visible.
+
+**Implementación**:
+```xml
+<!-- web.xml -->
+<session-config>
+    <tracking-mode>COOKIE</tracking-mode>
+</session-config>
+```
+
+**Efecto**:
+- **Antes**: URLs podían incluir `;jsessionid=9F0DDD3B19456B59F6AB0CE96467D64D`
+- **Ahora**: Session ID solo viaja en cookies HTTP, nunca en URL
+- Si cookies están deshabilitadas: no hay sesión (más seguro que exponer ID en URL)
+
+**Beneficios**:
+- URLs limpias y compartibles sin riesgo de secuestro de sesión
+- Session ID no queda en historiales del navegador
+- Session ID no aparece en logs de proxies/analíticas
+
+#### 3. Protección de datos personales (POST en acciones sensibles)
+
+Las acciones que manejan DNI u otros datos personales usan **POST** en lugar de GET:
+- Consultar salario: `POST /app/nominas` (action=consultarSalario, dni)
+- Buscar empleados: `POST /app/empleados` (action=buscarResultado, campo, valor)
+- Editar empleado: `POST /app/empleados` (action=editar, dni)
+
+**Beneficios**:
+- DNI no queda expuesto en barra de direcciones
+- No se guarda en historial del navegador
+- Cumplimiento con RGPD/LOPD
+
+#### 4. Recursos protegidos
+
+- JSPs internos en `WEB-INF/` (no accesibles directamente vía URL)
+- `application.properties` dentro de `WEB-INF/classes/` (no servible por HTTP)
+- Contenedor bloquea acceso a `WEB-INF/` y `META-INF/` por especificación Servlet
+
+### Modo Development vs Production
+
+| Aspecto | Development | Production |
+|---------|-------------|------------|
+| **Parámetro en web.xml** | `development` | `production` |
+| **Mensajes de error** | Originales + técnicos | Sanitizados y genéricos |
+| **Stack traces** | Visibles en error.jsp | NO se envían al navegador |
+| **Logs del servidor** | Error completo | Error completo (igual) |
+| **Uso recomendado** | Local, debugging | Servidores públicos |
+
+**Cambiar de modo**: Editar `web.xml` → `<param-value>production</param-value>` → Recompilar (`mvn package`)
+
+### Clase utilitaria ErrorHandler
+
+Para evitar duplicación de código, toda la lógica de sanitización y manejo de errores está centralizada en **`com.util.ErrorHandler`**:
+
+**Métodos disponibles**:
+
+```java
+// Sanitizar mensaje sin forward (útil para logging o validaciones)
+String mensaje = ErrorHandler.sanitizeErrorMessage(exception.getMessage());
+
+// Manejo completo con modo development/production (usado en FrontController)
+ErrorHandler.handleError(e, request, response, getServletContext());
+
+// Manejo simplificado con logging automático (EmpleadosController, NominasController)
+ErrorHandler.handleErrorSimple(e, request, response);
+
+// Obtener stack trace como String (para logging personalizado)
+String stackTrace = ErrorHandler.getStackTraceAsString(exception);
+```
+
+**Ventajas de la centralización**:
+- **DRY**: Lógica de sanitización en un solo lugar
+- **Mantenibilidad**: Cambios en reglas de sanitización solo requieren modificar `ErrorHandler`
+- **Reutilización**: Cualquier clase puede usar los métodos estáticos
+- **Testing**: Fácil probar unitariamente sin instanciar servlets
+- **Logging automático**: Todos los errores se registran en logs del servidor
+- **Controladores más ligeros**: Solo orquestan, no gestionan detalles de errores
+
+**Reglas de sanitización implementadas**:
+- **Lista blanca** (se permiten): dni, empleado, nómina, categoría, salario, años
+- **Lista negra** (se bloquean): sql, connection, database, table, column, jdbc, exception, nullpointer, class, stack
+
+**Logging de errores**:
+- `handleErrorSimple()` registra automáticamente en `ServletContext.log()` (archivo `localhost.YYYY-MM-DD.log`)
+- Información logueada: timestamp, URI, método HTTP, mensaje original y stack trace completo
+- Usuario final solo ve mensaje sanitizado, desarrollador tiene detalles completos en logs
+
+---
+
+### Salida segura en vistas (XSS)
+
+Para prevenir Cross-Site Scripting, todas las variables renderizadas en JSP usan **`<c:out>`** (JSTL), que aplica `escapeXml=true` por defecto. Esto evita que contenido inyectado se interprete como HTML/JS.
+
+Recomendaciones:
+- No imprimir `${variable}` directamente en el HTML. Usa `<c:out value="${variable}"/>`.
+- En atributos HTML (`value=`, `title=`, etc.), también usar `<c:out>`.
+- En campos ocultos (`<input type="hidden">`), escapar el valor con `<c:out>`.
+- Si necesitas permitir HTML controlado, valida/whitelistea previamente en backend y documenta el motivo.
+
+Checklist para contribuciones:
+- [ ] Salidas en `<td>`, `<h1..h6>`, `<p>`: `<c:out>`
+- [ ] Atributos de inputs (`value`): `<c:out>`
+- [ ] Campos `hidden`: `<c:out>`
+- [ ] Mensajes de error al usuario: pasan por `ErrorHandler.sanitizeErrorMessage()` + `<c:out>`
+
+---
+
+### Buenas prácticas adicionales recomendadas
+
+Para entornos de producción críticos:
+- Cifrar contraseñas en `application.properties` (Jasypt u otro)
+- Usar variables de entorno en lugar de properties para credenciales
+- Implementar logger profesional (SLF4J + Logback) en lugar de `log()`
+- Configurar HTTPS en Tomcat
+- Limitar intentos de login si se añade autenticación
+
+---
+
 ## Estructura del Proyecto
 
 ```
@@ -489,11 +650,13 @@ empresa/
 │       │       │   ├── Persona.java          # Clase padre
 │       │       │   ├── Empleado.java         # Modelo empleado
 │       │       │   └── Nomina.java           # Lógica cálculo salario
-│       │       └── service/
-│       │           ├── IEmpleadoService.java # Interfaz servicio empleados
-│       │           ├── INominaService.java   # Interfaz servicio nóminas
-│       │           ├── EmpleadoService.java  # Implementación
-│       │           └── NominaService.java    # Implementación
+│       │       ├── service/
+│       │       │   ├── IEmpleadoService.java # Interfaz servicio empleados
+│       │       │   ├── INominaService.java   # Interfaz servicio nóminas
+│       │       │   ├── EmpleadoService.java  # Implementación
+│       │       │   └── NominaService.java    # Implementación
+│       │       └── util/
+│       │           └── ErrorHandler.java     # Utilidad manejo errores centralizado
 │       ├── resources/
 │       │   └── application.properties        # Config externalizada (BD)
 │       └── webapp/
@@ -569,6 +732,36 @@ mvn clean package
 http://localhost:8080/empresa/
 ```
 
+### Debugging y Logs
+
+**Ver errores en logs de Tomcat** (Windows):
+```powershell
+# Logs de aplicación (aquí van los errores de ErrorHandler)
+Get-Content "C:\Program Files\Apache Software Foundation\Tomcat 9.0\logs\localhost.YYYY-MM-DD.log" -Tail 50
+
+# Monitoreo en tiempo real
+Get-Content "C:\Program Files\Apache Software Foundation\Tomcat 9.0\logs\localhost.YYYY-MM-DD.log" -Tail 50 -Wait
+
+# Buscar errores específicos
+Select-String -Path "C:\Program Files\Apache Software Foundation\Tomcat 9.0\logs\localhost.*.log" -Pattern "ERROR EN APLICACIÓN" -Context 0,10
+```
+
+**Ver errores en logs de Tomcat** (Linux/Mac):
+```bash
+# Logs de aplicación
+tail -f $CATALINA_HOME/logs/localhost.YYYY-MM-DD.log
+
+# Buscar errores específicos
+grep -A 10 "ERROR EN APLICACIÓN" $CATALINA_HOME/logs/localhost.*.log
+```
+
+**Información logueada por ErrorHandler**:
+- Timestamp del error
+- URI de la petición
+- Método HTTP (GET/POST)
+- Mensaje original de la excepción
+- Stack trace completo
+
 ---
 
 ## Principios SOLID Aplicados
@@ -591,23 +784,36 @@ http://localhost:8080/empresa/
 - **Separación de capas (4 capas)**: Presentation → Controller → Service → DAO → BD
 - **Forward a WEB-INF**: JSPs protegidos, solo accesibles via forward
 - **Validaciones centralizadas**: En capa de servicio (Service Layer)
-- **Manejo centralizado de errores**: Página error común
+- **Manejo centralizado de errores**: Página error común con sanitización
 - **Interfaces para DAOs y Services**: Preparado para inyección de dependencias
 - **Testing con mocks**: JUnit + Mockito sin base de datos (ver `EmpleadoServiceTest`)
 - **Configuración externalizada**: `application.properties` para credenciales BD
+- **Seguridad**: Sanitización de errores, sesiones solo por cookies, POST para datos sensibles
 
 ---
 
 ## Manejo de Errores
 
-Todos los errores se centralizan en `FrontController.manejarError()` y se redirigen a `/WEB-INF/error.jsp`.
+Todos los errores se centralizan y sanitizan según el entorno configurado.
 
-Validaciones clave:
+**Flujo de error**:
+1. Excepción capturada en controlador
+2. `manejarError()` invoca `sanitizeErrorMessage()`
+3. Si modo `development`: añade `errorType` y `errorStackTrace` al request
+4. Forward a `/WEB-INF/error.jsp`
+5. JSP muestra mensaje sanitizado (+ detalles técnicos si development)
+6. Error completo siempre se loggea en servidor
+
+**Validaciones clave**:
 - **En Service Layer**: DNI vacío, empleado no encontrado
 - DNI no nulo en consultas
 - Empleado existente antes de editar
 - Campos requeridos en formularios
 - Conexiones cerradas con try-with-resources
+
+**Mensajes sanitizados**:
+- Permitidos: "DNI no proporcionado", "Empleado no encontrado"
+- Bloqueados: "SQLException: Table 'nominas' doesn't exist", "NullPointerException at line 45"
 
 ---
 
