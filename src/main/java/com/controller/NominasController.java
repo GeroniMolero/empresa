@@ -42,9 +42,6 @@ public class NominasController extends HttpServlet {
                     // Mostrar el formulario para introducir DNI
                     request.getRequestDispatcher("/salarioForm.jsp").forward(request, response);
                     break;
-                case "consultarSalario":
-                    consultarSalario(request, response);
-                    break;
                 case "listarNominas":
                     listarNominas(request, response);
                     break;
@@ -86,6 +83,17 @@ public class NominasController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        doGet(request, response);
+        String action = request.getParameter("action");
+        
+        try {
+            if ("consultarSalario".equals(action)) {
+                consultarSalario(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Acción POST no reconocida: " + action);
+            }
+        } catch (Exception e) {
+            request.setAttribute("error", e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/error.jsp").forward(request, response);
+        }
     }
 }

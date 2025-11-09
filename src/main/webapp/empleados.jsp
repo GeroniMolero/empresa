@@ -40,8 +40,16 @@
                                 <td>${empleado.categoria}</td>
                                 <td>${empleado.anyos}</td>
                                 <td>
-                                    <a class="btn-small" href="<c:url value='/app/empleados?action=editar&dni=${empleado.dni}'/>">Editar</a>
-                                    <a class="btn-small" href="<c:url value='/app/nominas?dni=${empleado.dni}&action=consultarSalario'/>">Ver salario</a>
+                                    <form action="<c:url value='/app/empleados'/>" method="post" style="display:inline;">
+                                        <input type="hidden" name="action" value="editar">
+                                        <input type="hidden" name="dni" value="${empleado.dni}">
+                                        <button type="submit" class="btn-small">Editar</button>
+                                    </form>
+                                    <form action="<c:url value='/app/nominas'/>" method="post" style="display:inline;">
+                                        <input type="hidden" name="action" value="consultarSalario">
+                                        <input type="hidden" name="dni" value="${empleado.dni}">
+                                        <button type="submit" class="btn-small">Ver salario</button>
+                                    </form>
                                 </td>
                                 </tr>
                             </c:forEach>

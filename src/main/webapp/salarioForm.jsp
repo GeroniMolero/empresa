@@ -14,7 +14,7 @@
 
     <main>
         <section class="form-container">
-            <form action="<c:url value='/app/nominas'/>" method="get" class="form-dark">
+            <form action="<c:url value='/app/nominas'/>" method="post" class="form-dark">
                 <input type="hidden" name="action" value="consultarSalario" />
 
                 <label for="dni">Introduce el DNI del empleado:</label>

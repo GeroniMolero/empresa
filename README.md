@@ -379,7 +379,7 @@ public void testConsultarSalario() {
 
 2. Usuario introduce DNI → Submit
 
-3. GET /empresa/app/nominas?action=consultarSalario&dni=12345678A
+3. POST /empresa/app/nominas (action=consultarSalario, dni=12345678A)
 
 4. NominasController.consultarSalario()
    - Invoca nominaService.consultarSalarioEmpleado(dni)
@@ -430,12 +430,29 @@ CREATE TABLE nominas (
 | **Página inicio** | GET | `/empresa/` | - |
 | **Listar empleados** | GET | `/app/empleados` | `action=listar` |
 | **Buscar empleados (form)** | GET | `/app/empleados` | `action=buscarForm` |
-| **Buscar empleados (resultado)** | GET | `/app/empleados` | `action=buscarResultado`, `campo`, `valor` |
-| **Editar empleado (form)** | GET | `/app/empleados` | `action=editar`, `dni` |
+| **Buscar empleados (resultado)** | POST | `/app/empleados` | `action=buscarResultado`, `campo`, `valor` |
+| **Editar empleado (form)** | POST | `/app/empleados` | `action=editar`, `dni` |
 | **Actualizar empleado** | POST | `/app/empleados` | `action=actualizar` + campos formulario |
 | **Form consultar salario** | GET | `/app/nominas` | `action=formularioSalario` |
-| **Consultar salario** | GET | `/app/nominas` | `action=consultarSalario`, `dni` |
+| **Consultar salario** | POST | `/app/nominas` | `action=consultarSalario`, `dni` |
 | **Listar nóminas** | GET | `/app/nominas` | `action=listarNominas` |
+
+> Nota: Las acciones sensibles que incluyen DNI u otros criterios de búsqueda ahora usan POST para no exponer datos en la URL.
+
+---
+
+## Seguridad de rutas (GET vs POST)
+
+Para mejorar la privacidad de los usuarios y evitar que datos personales queden expuestos en URLs, historiales del navegador, logs de proxies o analíticas, se han realizado estos cambios:
+
+- Consultar salario: de GET a POST (`/app/nominas`, action=consultarSalario, dni)
+- Buscar empleados (resultado): de GET a POST (`/app/empleados`, action=buscarResultado, campo, valor)
+- Editar empleado (form): de GET a POST (`/app/empleados`, action=editar, dni)
+
+Implicaciones prácticas:
+- Los enlaces que antes eran anchors (a href) han sido reemplazados por formularios con método POST.
+- Los formularios incluyen campos ocultos para action y, cuando aplique, dni/campo/valor.
+- No cambia el flujo de usuario ni los JSP; solo el método HTTP con el que se envían los datos.
 
 ---
 
@@ -656,36 +673,9 @@ db.driver=com.mysql.cj.jdbc.Driver
 
 ---
 
-## Posibles Mejoras Futuras
-
-1. **Más tests**: Añadir tests para `NominaService` y controladores
-2. **Spring Framework**: Inyección de dependencias automática (`@Autowired`)
-3. **Seguridad**: Autenticación, autorización por roles (Spring Security)
-4. **Paginación**: Listados grandes con paginación
-5. **Validaciones**: JSR-303 Bean Validation en modelos
-6. **Internacionalización**: Soporte multi-idioma (i18n)
-7. **REST API**: Endpoints REST para integración con frontend moderno
-8. **Cache**: Redis/Ehcache para consultas frecuentes
-9. **Logging**: SLF4J + Logback en lugar de printStackTrace
-10. **Profiles Maven**: dev, test, prod con application-{profile}.properties
-11. **CI/CD**: Pipeline automatizado (GitHub Actions, Jenkins)
-12. **DTOs**: Separar modelos de dominio de objetos de transferencia
-
----
-
 ## Explicación Resumida (Elevator Pitch)
 
 > "Aplicación web Java EE que implementa **arquitectura de 4 capas** con Front Controller centralizando todas las peticiones HTTP. Los controladores delegan en **servicios que encapsulan lógica de negocio**, validaciones y coordinación de múltiples DAOs. Los DAOs están abstraídos mediante interfaces (IEmpleadoDAO, INominaDAO), reduciendo acoplamiento y facilitando testing con mocks (JUnit + Mockito). La creación de objetos Empleado está centralizada con Factory y facilitada por Builder. La conexión a base de datos usa Singleton con pool DBCP2 para eficiencia, leyendo configuración desde properties externos. Las vistas JSP únicamente presentan datos usando JSTL. El sistema implementa **6 patrones de diseño** profesionales y cuenta con tests sin base de datos (EmpleadoServiceTest)."
-
----
-
-## Documentación Adicional
-
-- **`PATRONES_RESUMEN.md`**: Documentación completa de los 6 patrones implementados con ejemplos
-- **`INTERFACES_GUIDE.md`**: Guía sobre uso de interfaces DAO y Service
-- **`FRONT_CONTROLLER_GUIDE.md`**: Guía detallada del Front Controller
-- **`ARQUITECTURA_Y_FUNCIONAMIENTO.md`**: Análisis profundo de la arquitectura
-- **`MEJORAS_IMPLEMENTADAS.md`**: Detalles de las mejoras críticas (Maven, Service Layer, Testing)
 
 ---
 

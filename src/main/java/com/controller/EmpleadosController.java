@@ -50,27 +50,6 @@ public class EmpleadosController extends HttpServlet {
                     forward(req, res, "WEB-INF/buscarEmpleado.jsp");
                     break;
 
-                case "buscarResultado":
-                    req.setAttribute("listaEmpleados", empleadoService.buscarEmpleadosPorCriterio(req));
-                    forward(req, res, "WEB-INF/resultadoBusqueda.jsp");
-                    break;
-
-                case "editar":
-                    String dni = req.getParameter("dni");
-                    if (dni == null || dni.trim().isEmpty()) {
-                        throw new IllegalArgumentException("El DNI del empleado no fue proporcionado para la edición.");
-                    }
-
-                    Empleado emp = empleadoService.buscarEmpleadoPorDni(dni);
-                    if (emp == null) {
-                        req.setAttribute("error", "No se encontró el empleado con DNI: " + dni);
-                    } else {
-                        req.setAttribute("empleado", emp);
-                    }
-
-                    forward(req, res, "WEB-INF/editarEmpleado.jsp");
-                    break;
-
                 default:
                     res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Acción no reconocida: " + action);
                     break;
@@ -90,6 +69,23 @@ public class EmpleadosController extends HttpServlet {
             if ("actualizar".equals(action)) {
                 empleadoService.actualizarEmpleado(req);
                 res.sendRedirect(req.getContextPath() + "/app/empleados?action=listar");
+            } else if ("buscarResultado".equals(action)) {
+                req.setAttribute("listaEmpleados", empleadoService.buscarEmpleadosPorCriterio(req));
+                forward(req, res, "WEB-INF/resultadoBusqueda.jsp");
+            } else if ("editar".equals(action)) {
+                String dni = req.getParameter("dni");
+                if (dni == null || dni.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El DNI del empleado no fue proporcionado para la edición.");
+                }
+
+                Empleado emp = empleadoService.buscarEmpleadoPorDni(dni);
+                if (emp == null) {
+                    req.setAttribute("error", "No se encontró el empleado con DNI: " + dni);
+                } else {
+                    req.setAttribute("empleado", emp);
+                }
+
+                forward(req, res, "WEB-INF/editarEmpleado.jsp");
             } else {
                 res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Acción POST no reconocida: " + action);
             }

@@ -14,7 +14,7 @@
 
 <main>
     <section class="form-container">
-        <form action="<c:url value='/app/empleados'/>" method="get" class="form-dark">
+        <form action="<c:url value='/app/empleados'/>" method="post" class="form-dark">
             <input type="hidden" name="action" value="buscarResultado"/>
 
             <label for="campo">Buscar por:</label>

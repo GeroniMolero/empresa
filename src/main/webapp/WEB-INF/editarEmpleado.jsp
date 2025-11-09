@@ -63,7 +63,7 @@
     <section class="form-container">
         <!-- Mostrar error si no se cargó el empleado -->
         <c:if test="${empty empleado}">
-            <p class="error">❌ No se pudo cargar el empleado. Verifique el DNI.</p>
+            <p class="error">No se pudo cargar el empleado. Verifique el DNI.</p>
             <a href="<c:url value='/app/empleados?action=listar'/>" class="btn-secundario">Volver</a>
         </c:if>
 
